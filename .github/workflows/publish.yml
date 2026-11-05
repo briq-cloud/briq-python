@@ -1,0 +1,39 @@
+name: publish
+# Publishes packages/python to PyPI as briq-cloud when a release tag (v0.1.0) is pushed. PyPI
+# Trusted Publishing: no token, the registry trusts this workflow of this repo (a Trusted Publisher
+# of the project, with no environment), and attaches the package's attestations.
+on:
+  push:
+    tags: ["v*"]
+
+permissions: { contents: read, id-token: write }
+
+jobs:
+  publish:
+    # GitHub's own runners: free for a public repo. (up-lab/briq runs on Ubicloud; this repo is not
+    # in that org.)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: The tag is the package's version
+        run: |
+          set -euo pipefail
+          have=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' src/briq_cloud/_version.py)
+          test -n "$have" && test "v$have" = "$GITHUB_REF_NAME" || { echo "::error::tag $GITHUB_REF_NAME, package $have"; exit 1; }
+      - run: uv sync --locked
+      - run: uv run ruff check . && uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run pytest
+      - run: uv build --out-dir "$RUNNER_TEMP/dist"
+      - name: Install the wheel in a clean environment and import it
+        run: |
+          set -euo pipefail
+          uv venv "$RUNNER_TEMP/smoke"
+          uv pip install --python "$RUNNER_TEMP/smoke/bin/python" "$RUNNER_TEMP"/dist/briq_cloud-*.whl
+          cd "$(mktemp -d)"
+          "$RUNNER_TEMP/smoke/bin/python" -c "import briq_cloud; from briq_cloud import Briq, AsyncBriq, BriqError; print(briq_cloud.__version__)"
+      - run: uv publish --trusted-publishing always "$RUNNER_TEMP"/dist/*

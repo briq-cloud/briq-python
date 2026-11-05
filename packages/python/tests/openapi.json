@@ -1,0 +1,2572 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "briq API",
+    "version": "0.0.0"
+  },
+  "x-recipes": [
+    "agent-home",
+    "bun",
+    "chrome",
+    "desktop",
+    "duckdb",
+    "go",
+    "grafana",
+    "kvm-sandbox",
+    "mailpit",
+    "memos",
+    "metabase",
+    "minio",
+    "mongo",
+    "mysql",
+    "n8n",
+    "neo4j",
+    "nginx",
+    "node",
+    "pandoc",
+    "php",
+    "plane",
+    "postgres",
+    "python",
+    "qdrant",
+    "rabbitmq",
+    "redis",
+    "redis-bullmq",
+    "ruby",
+    "rust",
+    "sandbox",
+    "siyuan",
+    "static",
+    "wiki"
+  ],
+  "x-error-details": [
+    "op",
+    "providerSaid"
+  ],
+  "paths": {
+    "/v1/quota": {
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "features": {
+                      "type": "object",
+                      "properties": {
+                        "briqLabels": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "literalEnvSecrets": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "briqLabels",
+                        "literalEnvSecrets"
+                      ]
+                    },
+                    "availableSizes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "pico",
+                          "micro",
+                          "nano",
+                          "small",
+                          "medium",
+                          "large",
+                          "xlarge"
+                        ]
+                      }
+                    },
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "hobby",
+                        "pro",
+                        "team"
+                      ]
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "maxConcurrentBriqs": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0,
+                          "default": null
+                        },
+                        "dailySpendCapCents": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 1000
+                        },
+                        "allowedSizes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "pico",
+                              "micro",
+                              "nano",
+                              "small",
+                              "medium",
+                              "large",
+                              "xlarge"
+                            ]
+                          },
+                          "default": [
+                            "pico",
+                            "micro",
+                            "nano",
+                            "small",
+                            "medium"
+                          ]
+                        },
+                        "allowedRegistries": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "default": [
+                            "docker.io",
+                            "ghcr.io",
+                            "quay.io"
+                          ]
+                        },
+                        "maxSleep": {
+                          "type": "string",
+                          "pattern": "^(?:never|[1-9][0-9]{0,4}[mhd])$",
+                          "default": "never"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time",
+                          "default": null
+                        }
+                      }
+                    },
+                    "spentTodayCents": {
+                      "type": "number"
+                    },
+                    "remainingTodayCents": {
+                      "type": "number"
+                    },
+                    "creditBalanceCents": {
+                      "type": "number"
+                    },
+                    "liveBriqs": {
+                      "type": "number"
+                    },
+                    "teamLiveBriqs": {
+                      "type": "number"
+                    },
+                    "maxConcurrentBriqs": {
+                      "type": "number"
+                    },
+                    "remainingTeamConcurrency": {
+                      "type": "number"
+                    },
+                    "remainingConcurrency": {
+                      "type": "number"
+                    },
+                    "memoryGb": {
+                      "type": "number"
+                    },
+                    "maxMemoryGb": {
+                      "type": "number"
+                    },
+                    "longestSleep": {
+                      "type": "string"
+                    },
+                    "diskGb": {
+                      "type": "number"
+                    },
+                    "maxDiskGb": {
+                      "type": "number"
+                    },
+                    "maxFileBytes": {
+                      "type": "number"
+                    },
+                    "team": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "slug",
+                        "name"
+                      ]
+                    },
+                    "key": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "key",
+                            "oauth"
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "features",
+                    "availableSizes",
+                    "plan",
+                    "policy",
+                    "spentTodayCents",
+                    "remainingTodayCents",
+                    "creditBalanceCents",
+                    "liveBriqs",
+                    "teamLiveBriqs",
+                    "maxConcurrentBriqs",
+                    "remainingTeamConcurrency",
+                    "remainingConcurrency",
+                    "memoryGb",
+                    "maxMemoryGb",
+                    "longestSleep",
+                    "diskGb",
+                    "maxDiskGb",
+                    "maxFileBytes",
+                    "team",
+                    "key"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "required": false,
+            "name": "idempotency-key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}": {
+      "get": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "briq": {
+                      "$ref": "#/components/schemas/Briq"
+                    },
+                    "costLine": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "briq",
+                    "costLine"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "briq": {
+                      "$ref": "#/components/schemas/Briq"
+                    }
+                  },
+                  "required": [
+                    "briq"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/stop": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "briq": {
+                      "$ref": "#/components/schemas/Briq"
+                    }
+                  },
+                  "required": [
+                    "briq"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/start": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "briq": {
+                      "$ref": "#/components/schemas/Briq"
+                    }
+                  },
+                  "required": [
+                    "briq"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/sleep": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SleepBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "briqs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Briq"
+                      }
+                    }
+                  },
+                  "required": [
+                    "briqs"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/expose": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "additional": {
+                    "type": "boolean"
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "protocol": {
+                    "type": "string",
+                    "enum": [
+                      "http",
+                      "postgres",
+                      "mysql",
+                      "redis",
+                      "mongodb",
+                      "amqp",
+                      "bolt",
+                      "grpc"
+                    ]
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "private"
+                    ]
+                  },
+                  "rotate": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "port"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "primary": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "number"
+                    },
+                    "protocol": {
+                      "type": "string",
+                      "enum": [
+                        "http",
+                        "postgres",
+                        "mysql",
+                        "redis",
+                        "mongodb",
+                        "amqp",
+                        "bolt",
+                        "grpc"
+                      ]
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "public",
+                        "private"
+                      ]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "hostname": {
+                      "type": "string"
+                    },
+                    "connectionString": {
+                      "type": "string"
+                    },
+                    "credentials": {
+                      "type": "string"
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "port",
+                    "mode",
+                    "url",
+                    "hostname"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/exec": {
+      "post": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cmd": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 65536
+                    },
+                    "minItems": 1,
+                    "maxItems": 256
+                  },
+                  "timeoutMs": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 86400000
+                  },
+                  "stdin": {
+                    "type": "string",
+                    "maxLength": 1000000
+                  },
+                  "async": {
+                    "type": "boolean"
+                  },
+                  "stdinOpen": {
+                    "type": "boolean"
+                  },
+                  "env": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "pattern": "^[^\\0]*$"
+                    }
+                  },
+                  "clearEnv": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "cmd"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stdout": {
+                      "type": "string"
+                    },
+                    "stderr": {
+                      "type": "string"
+                    },
+                    "exitCode": {
+                      "type": "number"
+                    },
+                    "timedOut": {
+                      "type": "boolean"
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    },
+                    "costLine": {
+                      "type": "string"
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "stdout",
+                    "stderr",
+                    "exitCode",
+                    "timedOut",
+                    "truncated",
+                    "costLine"
+                  ]
+                }
+              }
+            }
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecStarted"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/execs/{execId}": {
+      "get": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "execId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "nullable": true,
+              "minimum": 0,
+              "maximum": 45000
+            },
+            "required": false,
+            "name": "waitMs",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "nullable": true,
+              "minimum": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stdout",
+                "stderr"
+              ]
+            },
+            "required": false,
+            "name": "stream",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 262144
+            },
+            "required": false,
+            "name": "maxBytes",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecCheck"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "execId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecCheck"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/files": {
+      "put": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "path",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "bytes": {
+                      "type": "number"
+                    },
+                    "sha256": {
+                      "type": "string"
+                    },
+                    "verified": {
+                      "type": "boolean"
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "bytes",
+                    "sha256",
+                    "verified"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/briqs/{id}/files/raw": {
+      "get": {
+        "tags": [
+          "briqs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "path",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RunBody": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "spec": {
+                "$ref": "#/components/schemas/BriqSpec"
+              },
+              "stack": {
+                "type": "string"
+              },
+              "expose": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "private"
+                ]
+              },
+              "wait": {
+                "type": "boolean",
+                "default": true
+              },
+              "waitTimeoutMs": {
+                "type": "integer",
+                "maximum": 300000,
+                "default": 120000
+              }
+            },
+            "required": [
+              "spec"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "image": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 255,
+                "pattern": "^[a-z0-9][a-z0-9._\\/-]*(?::[\\w.-]+)?(?:@sha256:[a-f0-9]{64})?$"
+              },
+              "env": {
+                "allOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 32768
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "secret": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 32768
+                            },
+                            "literal": {
+                              "type": "boolean",
+                              "enum": [
+                                true
+                              ]
+                            },
+                            "scope": {
+                              "type": "string",
+                              "enum": [
+                                "boot",
+                                "team"
+                              ]
+                            },
+                            "hosts": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 253,
+                                "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+                              },
+                              "minItems": 1,
+                              "maxItems": 20
+                            },
+                            "locations": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "header",
+                                  "body"
+                                ]
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "required": [
+                            "secret"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "nullable": true
+                  }
+                ]
+              },
+              "cmd": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8192
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 8192
+                    },
+                    "maxItems": 64
+                  }
+                ]
+              },
+              "size": {
+                "type": "string",
+                "enum": [
+                  "pico",
+                  "micro",
+                  "nano",
+                  "small",
+                  "medium",
+                  "large",
+                  "xlarge"
+                ]
+              },
+              "volume": {
+                "type": "object",
+                "properties": {
+                  "gb": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500
+                  }
+                },
+                "required": [
+                  "gb"
+                ]
+              },
+              "files": {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "base64": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "base64"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "ports": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                }
+              },
+              "checkout": {
+                "type": "object",
+                "properties": {
+                  "repo": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "secret": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "secret"
+                    ]
+                  }
+                },
+                "required": [
+                  "repo"
+                ]
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "run": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "run"
+                  ]
+                }
+              },
+              "routes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "recipe": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "stack": {
+                "type": "string"
+              },
+              "expose": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "private"
+                ]
+              },
+              "sleep": {
+                "type": "string",
+                "pattern": "^(?:never|[1-9][0-9]{0,4}[mhd])$"
+              },
+              "wait": {
+                "type": "boolean",
+                "default": true
+              },
+              "waitTimeoutMs": {
+                "type": "integer",
+                "maximum": 300000,
+                "default": 120000
+              }
+            },
+            "required": [
+              "recipe"
+            ]
+          }
+        ]
+      },
+      "BriqSpec": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "image": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 255,
+            "pattern": "^[a-z0-9][a-z0-9._\\/-]*(?::[\\w.-]+)?(?:@sha256:[a-f0-9]{64})?$"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          "cmd": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 8192
+                },
+                "maxItems": 64
+              }
+            ]
+          },
+          "entrypoint": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 8192
+            },
+            "maxItems": 64
+          },
+          "env": {
+            "allOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 32768
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "secret": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 32768
+                        },
+                        "literal": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "boot",
+                            "team"
+                          ]
+                        },
+                        "hosts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 253,
+                            "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 20
+                        },
+                        "locations": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "header",
+                              "body"
+                            ]
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "secret"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              {
+                "nullable": true
+              }
+            ],
+            "default": {}
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "maxItems": 32,
+            "default": []
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "pico",
+              "micro",
+              "nano",
+              "small",
+              "medium",
+              "large",
+              "xlarge"
+            ],
+            "default": "small"
+          },
+          "volume": {
+            "type": "object",
+            "properties": {
+              "mount": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "gb": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "default": 2
+              },
+              "copy": {
+                "type": "string",
+                "enum": [
+                  "never"
+                ]
+              }
+            },
+            "required": [
+              "mount"
+            ]
+          },
+          "kvm": {
+            "type": "boolean"
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "base64": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "base64"
+                  ]
+                }
+              ]
+            }
+          },
+          "healthcheck": {
+            "type": "object",
+            "properties": {
+              "cmd": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 8192
+                },
+                "minItems": 1,
+                "maxItems": 64
+              },
+              "intervalMs": {
+                "type": "integer",
+                "minimum": 500,
+                "default": 2000
+              },
+              "timeoutMs": {
+                "type": "integer",
+                "minimum": 1000,
+                "maximum": 300000,
+                "default": 60000
+              }
+            },
+            "required": [
+              "cmd"
+            ]
+          },
+          "sleep": {
+            "type": "string",
+            "pattern": "^(?:never|[1-9][0-9]{0,4}[mhd])$"
+          },
+          "expose": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "name",
+          "image"
+        ]
+      },
+      "RunResult": {
+        "type": "object",
+        "properties": {
+          "briqs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Briq"
+            }
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {}
+          },
+          "recipe": {
+            "type": "string",
+            "nullable": true
+          },
+          "costLine": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "briqs",
+          "recipe",
+          "costLine"
+        ]
+      },
+      "Briq": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 1024
+            },
+            "default": {}
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "stackId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "image": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 255,
+            "pattern": "^[a-z0-9][a-z0-9._\\/-]*(?::[\\w.-]+)?(?:@sha256:[a-f0-9]{64})?$"
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "pico",
+              "micro",
+              "nano",
+              "small",
+              "medium",
+              "large",
+              "xlarge"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "creating",
+              "running",
+              "stopping",
+              "stopped",
+              "sleeping",
+              "starting",
+              "resizing",
+              "moving",
+              "destroying",
+              "destroyed",
+              "error"
+            ]
+          },
+          "internalHost": {
+            "type": "string"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "primary": {
+                  "type": "boolean"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "integer"
+                },
+                "protocol": {
+                  "type": "string",
+                  "enum": [
+                    "http",
+                    "postgres",
+                    "mysql",
+                    "redis",
+                    "mongodb",
+                    "amqp",
+                    "bolt",
+                    "grpc"
+                  ],
+                  "default": "http"
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "public",
+                    "private"
+                  ]
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "id",
+                "port",
+                "mode",
+                "url"
+              ]
+            }
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "default": []
+          },
+          "databasePorts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "protocol": {
+                  "type": "string",
+                  "enum": [
+                    "http",
+                    "postgres",
+                    "mysql",
+                    "redis",
+                    "mongodb",
+                    "amqp",
+                    "bolt",
+                    "grpc"
+                  ]
+                }
+              },
+              "required": [
+                "port",
+                "protocol"
+              ]
+            },
+            "default": []
+          },
+          "expose": {
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          "env": {
+            "allOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 32768
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "secret": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 32768
+                        },
+                        "literal": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "boot",
+                            "team"
+                          ]
+                        },
+                        "hosts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 253,
+                            "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 20
+                        },
+                        "locations": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "header",
+                              "body"
+                            ]
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "secret"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              {
+                "nullable": true
+              }
+            ],
+            "default": {}
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "sleep": {
+            "type": "string",
+            "pattern": "^(?:never|[1-9][0-9]{0,4}[mhd])$"
+          },
+          "sleepsAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "costCentsSoFar": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "destroysAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "default": null
+          },
+          "stoppedReason": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "idle",
+              "cap",
+              "credits",
+              "user",
+              "provider",
+              "exited"
+            ],
+            "default": null
+          },
+          "lastExit": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "code": {
+                "type": "integer"
+              },
+              "oomKilled": {
+                "type": "boolean"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "default": null,
+            "required": [
+              "code",
+              "oomKilled",
+              "at"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "bytes": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "bytes"
+              ]
+            },
+            "default": []
+          },
+          "forkedFrom": {
+            "type": "string",
+            "nullable": true,
+            "default": null
+          },
+          "volume": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "mount": {
+                "type": "string"
+              },
+              "gb": {
+                "type": "integer"
+              }
+            },
+            "default": null,
+            "required": [
+              "mount",
+              "gb"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "teamId",
+          "stackId",
+          "name",
+          "image",
+          "size",
+          "state",
+          "internalHost",
+          "endpoints",
+          "createdAt",
+          "startedAt",
+          "sleep",
+          "sleepsAt",
+          "lastUsedAt",
+          "costCentsSoFar",
+          "error"
+        ]
+      },
+      "SleepBody": {
+        "type": "object",
+        "properties": {
+          "sleep": {
+            "type": "string",
+            "pattern": "^(?:never|[1-9][0-9]{0,4}[mhd])$"
+          },
+          "stack": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "sleep"
+        ]
+      },
+      "ExecStarted": {
+        "type": "object",
+        "properties": {
+          "exec": {
+            "$ref": "#/components/schemas/Exec"
+          },
+          "costLine": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exec",
+          "costLine"
+        ]
+      },
+      "Exec": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "briqId": {
+            "type": "string"
+          },
+          "cmd": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "exited",
+              "timed_out",
+              "stopped",
+              "lost"
+            ]
+          },
+          "exitCode": {
+            "type": "number",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "deadlineAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputDir": {
+            "type": "string"
+          },
+          "briqRunning": {
+            "type": "boolean"
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "stdout": {
+                "type": "string"
+              },
+              "stderr": {
+                "type": "string"
+              },
+              "stdoutBytes": {
+                "type": "number"
+              },
+              "stderrBytes": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "stdout",
+              "stderr",
+              "stdoutBytes",
+              "stderrBytes"
+            ]
+          },
+          "read": {
+            "type": "object",
+            "properties": {
+              "stream": {
+                "type": "string",
+                "enum": [
+                  "stdout",
+                  "stderr"
+                ]
+              },
+              "offset": {
+                "type": "number"
+              },
+              "data": {
+                "type": "string"
+              },
+              "nextOffset": {
+                "type": "number"
+              },
+              "bytes": {
+                "type": "number"
+              },
+              "eof": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "stream",
+              "offset",
+              "data",
+              "nextOffset",
+              "bytes",
+              "eof"
+            ]
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "open": {
+                "type": "boolean"
+              },
+              "seq": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "open",
+              "seq"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "briqId",
+          "cmd",
+          "state",
+          "exitCode",
+          "startedAt",
+          "deadlineAt",
+          "finishedAt",
+          "outputDir",
+          "briqRunning"
+        ]
+      },
+      "ExecCheck": {
+        "type": "object",
+        "properties": {
+          "exec": {
+            "$ref": "#/components/schemas/Exec"
+          },
+          "costLine": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exec",
+          "costLine"
+        ]
+      }
+    }
+  }
+}

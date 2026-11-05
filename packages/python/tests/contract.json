@@ -1,0 +1,147 @@
+{
+  "note": "What the client reads and sends, per operation of the API. test_contract.py checks each entry against tests/openapi.json. A path is dotted ('briq.id'); '[]' steps into an array ('briqs[].id'); '*' steps into the values of a map ('env.*.secret'). recipes are the recipe names the client sends, found in the snapshot's x-recipes. An entry is a type, or a type with the values the client compares it to.",
+  "briq": {
+    "briq.id": "string",
+    "briq.name": "string",
+    "briq.image": "string",
+    "briq.size": "string",
+    "briq.state": {
+      "type": "string",
+      "values": ["creating", "starting", "running", "stopped", "destroyed", "error"]
+    },
+    "briq.sleep": "string",
+    "briq.teamId": "string",
+    "briq.createdAt": "string",
+    "briq.sleepsAt": "string",
+    "briq.costCentsSoFar": "number",
+    "briq.error": "string"
+  },
+  "error": {
+    "error.code": "string",
+    "error.message": "string",
+    "error.details": "any",
+    "error.requestId": "string"
+  },
+  "error_details": {
+    "note": "The API's OpenAPI document types error.details as any. These are the keys of it the client reads (the 409 and 503 answers of an exec decide outcome_unknown or unavailable). The snapshot script finds them in the API's source and writes them to x-error-details; it fails when one is no longer there.",
+    "keys": ["op", "providerSaid"]
+  },
+  "recipes": ["sandbox"],
+  "operations": [
+    {
+      "op": "GET /v1/quota",
+      "responses": { "200": { "features.literalEnvSecrets": "boolean", "team.id": "string" } }
+    },
+    {
+      "op": "POST /v1/briqs",
+      "headers": ["idempotency-key"],
+      "request": {
+        "recipe": "string",
+        "wait": "boolean",
+        "waitTimeoutMs": "integer",
+        "name": "string",
+        "size": "string",
+        "image": "string",
+        "sleep": "string",
+        "env": "object",
+        "env.*.secret": "string",
+        "env.*.value": "string",
+        "env.*.literal": "boolean"
+      },
+      "responses": { "201": { "$briqs": true } }
+    },
+    {
+      "op": "GET /v1/briqs/{id}",
+      "params": { "id": "path" },
+      "responses": { "200": { "$briq": true } }
+    },
+    {
+      "op": "DELETE /v1/briqs/{id}",
+      "params": { "id": "path" },
+      "responses": { "200": { "briq.state": "string" } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/stop",
+      "params": { "id": "path" },
+      "responses": { "200": { "$briq": true } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/start",
+      "params": { "id": "path" },
+      "responses": { "200": { "$briq": true } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/sleep",
+      "params": { "id": "path" },
+      "request": { "sleep": "string" },
+      "responses": { "200": { "$briqs": true } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/expose",
+      "params": { "id": "path" },
+      "request": {
+        "port": "integer",
+        "mode": { "type": "string", "values": ["public", "private"] }
+      },
+      "responses": { "201": { "url": "string" } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/exec",
+      "params": { "id": "path" },
+      "request": {
+        "cmd": "array",
+        "timeoutMs": "integer",
+        "stdin": "string",
+        "env": "object",
+        "async": "boolean"
+      },
+      "responses": {
+        "200": {
+          "stdout": "string",
+          "stderr": "string",
+          "exitCode": "number",
+          "timedOut": "boolean",
+          "truncated": "boolean"
+        },
+        "202": { "exec.id": "string" }
+      }
+    },
+    {
+      "op": "GET /v1/briqs/{id}/execs/{execId}",
+      "params": {
+        "id": "path",
+        "execId": "path",
+        "waitMs": "query",
+        "offset": "query",
+        "stream": "query"
+      },
+      "responses": {
+        "200": {
+          "exec.state": {
+            "type": "string",
+            "values": ["running", "exited", "timed_out", "stopped", "lost"]
+          },
+          "exec.exitCode": "number",
+          "exec.read.data": "string",
+          "exec.read.nextOffset": "number",
+          "exec.read.eof": "boolean"
+        }
+      }
+    },
+    {
+      "op": "DELETE /v1/briqs/{id}/execs/{execId}",
+      "params": { "id": "path", "execId": "path" },
+      "responses": { "200": {} }
+    },
+    {
+      "op": "PUT /v1/briqs/{id}/files",
+      "params": { "id": "path", "path": "query" },
+      "responses": { "200": { "bytes": "number", "sha256": "string" } }
+    },
+    {
+      "op": "GET /v1/briqs/{id}/files/raw",
+      "params": { "id": "path", "path": "query" },
+      "responses": { "200": { "_media": "application/octet-stream" } }
+    }
+  ]
+}
