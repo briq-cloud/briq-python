@@ -104,6 +104,7 @@ class FakeAPI:
             ("POST", r"/v1/briqs", self._create),
             ("GET", b, lambda r, body, id: self._get(id)),
             ("DELETE", b, lambda r, body, id: self._destroy(id)),
+            ("PATCH", b, self._set_image),
             ("POST", b + "/stop", lambda r, body, id: self._set(id, "stopped")),
             ("POST", b + "/start", lambda r, body, id: self._set(id, "running")),
             ("POST", b + "/sleep", self._sleep),
@@ -172,6 +173,14 @@ class FakeAPI:
             return error(404, "not_found", "No such sandbox")
         self._row(id)["state"] = "starting" if state == "running" else state
         self._polls[id] = 0
+        return self._briq(id)
+
+    def _set_image(self, request: httpx.Request, body: Any, id: str) -> httpx.Response:
+        if id not in self.sandboxes:
+            return error(404, "not_found", "No such sandbox")
+        if self._row(id)["state"] != "stopped":
+            return error(409, "invalid_state", "Stop the sandbox before changing its image")
+        self._row(id)["image"] = body["image"]
         return self._briq(id)
 
     def _destroy(self, id: str) -> httpx.Response:

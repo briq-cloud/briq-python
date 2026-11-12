@@ -24,6 +24,7 @@ from typing import Any, TypeVar
 from urllib.parse import quote
 
 from ._errors import BriqError, Code, envelope, refusal
+from ._execution import Access, ExecutionMode, parse_access
 from ._models import ExecResult, FileInfo, OutputChunk, SandboxInfo, parse_sandbox
 
 T = TypeVar("T")
@@ -39,6 +40,12 @@ MAX_FILE = 100 * MiB
 MAX_ARGV = 8_192
 #: What a plain HTTP exec may run for; longer, or read as it comes, is an async exec.
 HTTP_EXEC_MAX_MS = 60_000
+#: Covers regional admission, a full synchronous command and response transport.
+REGIONAL_EXEC_TIMEOUT = 95.0
+#: The HTTP API captures 4 MiB per stream; replacement UTF-8 can expand each byte threefold.
+HTTP_CAPTURE_BYTES = 4 * MiB
+#: JSON control-character escaping needs more space than the decoded output.
+REGIONAL_RESPONSE_BYTES = 64 * MiB
 #: Time on top of a command's own timeout for the rest of the call: a wake, the round trip.
 ROUND_TRIP = 30.0
 
@@ -56,6 +63,8 @@ class Request:
     timeout: float | None = None
     #: The most of the answer that is read.
     max_bytes: int = 64 * MiB
+    #: A separate origin and scoped credential, never the control client's configuration.
+    execution: Access | None = None
 
 
 @dataclass(slots=True)
@@ -291,13 +300,20 @@ def get_sandbox(id: str) -> Flow[SandboxInfo]:
     return _briq((yield from _call(Request("GET", f"/v1/briqs/{seg(id)}"))))
 
 
-def stop_sandbox(id: str) -> Flow[SandboxInfo]:
-    return _briq((yield from _call(Request("POST", f"/v1/briqs/{seg(id)}/stop"))))
+def stop_sandbox(id: str, cold: bool = False) -> Flow[SandboxInfo]:
+    body = {"mode": "cold"} if cold else None
+    return _briq((yield from _call(Request("POST", f"/v1/briqs/{seg(id)}/stop", json=body))))
 
 
 def start_sandbox(id: str, wait_timeout: float) -> Flow[SandboxInfo]:
     started = _briq((yield from _call(Request("POST", f"/v1/briqs/{seg(id)}/start"))))
     return (yield from _until_running(started, wait_timeout))
+
+
+def set_image(id: str, image: str) -> Flow[SandboxInfo]:
+    return _briq(
+        (yield from _call(Request("PATCH", f"/v1/briqs/{seg(id)}", json={"image": image})))
+    )
 
 
 def set_sleep(id: str, sleep: str) -> Flow[SandboxInfo]:
@@ -369,6 +385,8 @@ def exec_command(
     stdin: str | None,
     timeout: float,
     on_output: Callable[[OutputChunk], Any] | None,
+    execution_mode: ExecutionMode = "central",
+    execution_ready: bool = False,
 ) -> Flow[ExecResult]:
     """Run a command. Over one HTTP call when it is short and nobody reads its output as it comes,
     else as an async exec, followed over HTTP."""
@@ -402,8 +420,36 @@ def exec_command(
     if env:
         body["env"] = dict(env)
     if on_output is None and timeout_ms <= HTTP_EXEC_MAX_MS:
-        return (yield from _exec_http(id, body, timeout))
+        access = None
+        if execution_mode != "central":
+            if execution_ready:
+                access = yield from _execution_access(id, execution_mode)
+            elif execution_mode == "regional":
+                raise BriqError("unavailable", "A separate execution transport is required")
+        return (yield from _exec_http(id, body, timeout, access))
+    if execution_mode == "regional":
+        raise BriqError("unsupported", "Regional execution supports synchronous commands only")
     return (yield from _exec_async(id, body, on_output))
+
+
+def _execution_access(id: str, mode: ExecutionMode) -> Flow[Access | None]:
+    try:
+        reply = yield Request(
+            "POST",
+            f"/v1/briqs/{seg(id)}/access",
+            json={"version": 1, "operations": ["exec"]},
+            max_bytes=64 * 1024,
+        )
+    except NoAnswer as exc:
+        raise BriqError("unavailable", "Could not discover regional execution access") from exc
+    if mode == "auto" and (
+        reply.status in (404, 405, 501)
+        or (reply.status == 503 and envelope(reply.content).get("code") == "provider_error")
+    ):
+        return None
+    if reply.too_large:
+        raise BriqError("provider", "The API returned invalid execution access")
+    return parse_access(_json(reply), id)
 
 
 def _exec_refusal(reply: Reply) -> BriqError:
@@ -434,20 +480,27 @@ def _sent(exc: NoAnswer) -> BriqError:
     return _unconfirmed()
 
 
-def _exec_http(id: str, body: dict[str, Any], timeout: float) -> Flow[ExecResult]:
+def _exec_http(
+    id: str, body: dict[str, Any], timeout: float, access: Access | None = None
+) -> Flow[ExecResult]:
     try:
         reply = yield Request(
             "POST",
             f"/v1/briqs/{seg(id)}/exec",
             json=body,
-            timeout=timeout + ROUND_TRIP,
-            max_bytes=MAX_OUTPUT,
+            timeout=REGIONAL_EXEC_TIMEOUT if access else timeout + ROUND_TRIP,
+            max_bytes=REGIONAL_RESPONSE_BYTES if access else MAX_OUTPUT,
+            execution=access,
         )
     except NoAnswer as exc:
-        raise _sent(exc) from exc
+        raise (_unconfirmed() if access else _sent(exc)) from exc
     if not reply.ok:
+        if access:
+            raise refusal(reply.status, reply.headers, b"", "outcome_unknown")
         raise _exec_refusal(reply)
     if reply.too_large:
+        if access:
+            raise _unconfirmed()
         raise BriqError("quota", "The command's output is over the client's limit; use on_output")
     try:
         a = json.loads(reply.content)
@@ -460,8 +513,17 @@ def _exec_http(id: str, body: dict[str, Any], timeout: float) -> Flow[ExecResult
             and not isinstance(code, bool)
             and (timed_out or 0 <= code <= 255)
             and isinstance(a.get("truncated", False), bool)
+            and (
+                not access
+                or (
+                    isinstance(a.get("truncated"), bool)
+                    and isinstance(a.get("costLine"), str)
+                    and len(stdout.encode()) <= 3 * HTTP_CAPTURE_BYTES
+                    and len(stderr.encode()) <= 3 * HTTP_CAPTURE_BYTES
+                )
+            )
         )
-    except (ValueError, KeyError, TypeError):
+    except (ValueError, KeyError, TypeError, UnicodeError):
         valid = False
     if not valid:
         raise _unconfirmed()

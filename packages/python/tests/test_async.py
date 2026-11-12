@@ -39,6 +39,13 @@ def test_the_whole_surface(api: FakeAPI) -> None:
             assert await sandbox.read_file("/work/x") == b"\x00\x01"
             assert await sandbox.preview_url(80, public=True) == "https://bq_1-80.briq.example/"
             assert (await sandbox.stop()).state == "stopped"
+            before_image = len(api.requests)
+            info = await sandbox.set_image("ubuntu:24.04")
+            assert info is sandbox.info
+            assert (info.image, info.state) == ("ubuntu:24.04", "stopped")
+            assert len(api.requests) == before_image + 1
+            assert api.requests[-1].method == "PATCH"
+            assert api.requests[-1].body == {"image": "ubuntu:24.04"}
             assert (await sandbox.start()).state == "running"
             assert (await sandbox.set_sleep("2h")).sleep == "2h"
             assert (await sandbox.refresh()).sleep == "2h"

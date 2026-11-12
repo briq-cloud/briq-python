@@ -36,6 +36,20 @@ Install: `pip install briq-cloud`. Python 3.10 or later. The only dependency is 
 
 `timeout` is the seconds one request may take. The client reads the usual proxy and certificate variables (`HTTPS_PROXY`, `SSL_CERT_FILE`). To set up the connection yourself, pass `http_client=` an `httpx.Client` (`httpx.AsyncClient` for `AsyncBriq`): it is used as it is, `close` leaves it open, and a redirect is never followed, whatever it says. `transport` takes an `httpx` transport, for tests.
 
+### Regional commands
+
+```python
+with Briq(execution_mode="auto") as briq:
+    sandbox = briq.sandbox("bq_...")
+    result = sandbox.exec(["python3", "--version"])
+```
+
+`execution_mode` defaults to `"central"`. `"auto"` asks the API for regional access before each synchronous command and uses central execution when discovery explicitly reports it unsupported. Authentication, quota, network errors and invalid access descriptors do not trigger fallback. After regional submission, any uncertain reply raises `outcome_unknown`; the command is never sent again.
+
+`"regional"` requires regional access. It refuses commands over 60 seconds or with `on_output` before discovery. With `"auto"`, those commands keep using central execution. File operations and sandbox management use the central API in every mode. Availability depends on the connected API.
+
+Regional execution uses a separate HTTP client with its own scoped credential. Its default connection ignores environment proxies and certificate overrides. If you supply `http_client` or `transport` for the central API, also supply a separate `execution_http_client` or `execution_transport` to use regional execution. Otherwise `"auto"` stays central and `"regional"` raises `unavailable`. A supplied execution client remains open when briq closes. Default client headers, cookies and authentication are not forwarded to execution origins; configure proxies and certificates on the separate execution client itself.
+
 ## Sandbox
 
 | Method                               | Does                                                          |
@@ -49,11 +63,13 @@ Install: `pip install briq-cloud`. Python 3.10 or later. The only dependency is 
 | `sandbox.remove(path, recursive=)`   | Removes a file or a directory.                                |
 | `sandbox.preview_url(port)`          | Returns a URL for a port. `public=True` for anyone.           |
 | `sandbox.stop()` / `sandbox.start()` | Stops it, keeps the disk, bills nothing. Starts it again.     |
+| `sandbox.set_image("ubuntu:24.04")` | Changes a stopped sandbox image; start it explicitly afterward. |
 | `sandbox.set_sleep("30m")`           | Sets the idle time before it sleeps. `"never"` stays awake.   |
 | `sandbox.refresh()`                  | Reads its state again.                                        |
 | `sandbox.destroy()`                  | Removes it and its disk.                                      |
 
-A sleeping sandbox wakes on the next call.
+Commands and file access wake a sleeping sandbox. Call `stop()` before `set_image()`.
+If `set_image()` returns `state="resizing"`, use `refresh()` until it finishes before calling `start()`.
 
 ### Run a command
 

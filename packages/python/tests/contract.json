@@ -7,7 +7,7 @@
     "briq.size": "string",
     "briq.state": {
       "type": "string",
-      "values": ["creating", "starting", "running", "stopped", "destroyed", "error"]
+      "values": ["creating", "starting", "running", "stopped", "resizing", "destroyed", "error"]
     },
     "briq.sleep": "string",
     "briq.teamId": "string",
@@ -56,6 +56,12 @@
       "responses": { "200": { "$briq": true } }
     },
     {
+      "op": "PATCH /v1/briqs/{id}",
+      "params": { "id": "path" },
+      "request": { "image": "string" },
+      "responses": { "200": { "$briq": true } }
+    },
+    {
       "op": "DELETE /v1/briqs/{id}",
       "params": { "id": "path" },
       "responses": { "200": { "briq.state": "string" } }
@@ -63,6 +69,7 @@
     {
       "op": "POST /v1/briqs/{id}/stop",
       "params": { "id": "path" },
+      "request": { "mode": "string" },
       "responses": { "200": { "$briq": true } }
     },
     {
@@ -75,6 +82,24 @@
       "params": { "id": "path" },
       "request": { "sleep": "string" },
       "responses": { "200": { "$briqs": true } }
+    },
+    {
+      "op": "POST /v1/briqs/{id}/access",
+      "params": { "id": "path" },
+      "request": { "version": "integer", "operations": "array" },
+      "responses": {
+        "200": {
+          "version": "integer",
+          "briqId": "string",
+          "region": "string",
+          "origin": "string",
+          "operations": "array",
+          "transports": "array",
+          "token": "string",
+          "expiresAt": "string",
+          "routeGeneration": "string"
+        }
+      }
     },
     {
       "op": "POST /v1/briqs/{id}/expose",
@@ -101,7 +126,8 @@
           "stderr": "string",
           "exitCode": "number",
           "timedOut": "boolean",
-          "truncated": "boolean"
+          "truncated": "boolean",
+          "costLine": "string"
         },
         "202": { "exec.id": "string" }
       }

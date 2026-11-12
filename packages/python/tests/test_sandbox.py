@@ -505,6 +505,11 @@ def test_preview_url(briq: Briq, api: FakeAPI) -> None:
 def test_stop_start_and_sleep(briq: Briq, api: FakeAPI) -> None:
     sandbox = briq.create_sandbox()
     assert sandbox.stop().state == "stopped" and sandbox.info.state == "stopped"
+    assert next(r for r in reversed(api.requests) if r.path.endswith("/stop")).body == b""
+    assert sandbox.start().state == "running"
+    assert sandbox.stop(cold=True).state == "stopped"
+    cold_request = next(r for r in reversed(api.requests) if r.path.endswith("/stop"))
+    assert cold_request.body == {"mode": "cold"}
     assert sandbox.start().state == "running"
     assert sandbox.set_sleep("never").sleep == "never"
     assert sandbox.refresh().sleep == "never"
@@ -554,3 +559,36 @@ def test_secrets_never_reach_an_error_message(briq: Briq, api: FakeAPI) -> None:
         briq.create_sandbox(secret_env={"T": "hunter2"})
     assert "hunter2" not in str(raised.value)
     assert "hunter2" not in repr(raised.value.details)
+
+
+def test_set_image_keeps_stopped_and_sends_only_image(briq: Briq, api: FakeAPI) -> None:
+    sandbox = briq.create_sandbox()
+    sandbox.stop()
+    api.requests.clear()
+    info = sandbox.set_image("ubuntu:24.04")
+    assert info is sandbox.info
+    assert (info.image, info.state) == ("ubuntu:24.04", "stopped")
+    assert len(api.requests) == 1
+    assert (api.requests[0].method, api.requests[0].path) == ("PATCH", BQ)
+    assert api.requests[0].body == {"image": "ubuntu:24.04"}
+
+
+def test_set_image_running_refusal_does_not_stop_or_start(briq: Briq, api: FakeAPI) -> None:
+    sandbox = briq.create_sandbox()
+    api.requests.clear()
+    with pytest.raises(BriqError) as raised:
+        sandbox.set_image("ubuntu:24.04")
+    assert raised.value.api_code == "invalid_state"
+    assert sandbox.info.state == "running"
+    assert len(api.requests) == 1 and api.requests[0].method == "PATCH"
+
+
+def test_set_image_returns_pending_without_starting(briq: Briq, api: FakeAPI) -> None:
+    sandbox = briq.create_sandbox()
+    sandbox.stop()
+    api.fail["PATCH " + BQ] = httpx.Response(
+        200, json={"briq": {**api.sandboxes[sandbox.id], "state": "resizing"}}
+    )
+    api.requests.clear()
+    assert sandbox.set_image("ubuntu:24.04").state == "resizing"
+    assert len(api.requests) == 1

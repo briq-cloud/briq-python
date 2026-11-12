@@ -36,4 +36,8 @@ jobs:
           uv pip install --python "$RUNNER_TEMP/smoke/bin/python" "$RUNNER_TEMP"/dist/briq_cloud-*.whl
           cd "$(mktemp -d)"
           "$RUNNER_TEMP/smoke/bin/python" -c "import briq_cloud; from briq_cloud import Briq, AsyncBriq, BriqError; print(briq_cloud.__version__)"
-      - run: uv publish --trusted-publishing always "$RUNNER_TEMP"/dist/*
+      # The PyPA action signs and uploads the attestations (provenance) with the files; `uv publish`
+      # uploaded the files of 0.1.1 without them.
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ${{ runner.temp }}/dist

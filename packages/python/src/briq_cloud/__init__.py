@@ -2,6 +2,7 @@
 
 from ._async import AsyncBriq, AsyncSandbox
 from ._errors import BriqError, Code
+from ._execution import ExecutionMode
 from ._models import ExecResult, FileInfo, OutputChunk, SandboxInfo
 from ._sync import Briq, Sandbox
 from ._version import __version__
@@ -13,6 +14,7 @@ __all__ = [
     "BriqError",
     "Code",
     "ExecResult",
+    "ExecutionMode",
     "FileInfo",
     "OutputChunk",
     "Sandbox",

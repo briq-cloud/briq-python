@@ -13,6 +13,7 @@ import httpx
 from . import _flows as f
 from ._config import headers, resolve, timeout_of
 from ._errors import BriqError
+from ._execution import ExecutionMode, mode_of
 from ._models import ExecResult, FileInfo, OutputChunk, SandboxInfo
 
 T = TypeVar("T")
@@ -30,6 +31,10 @@ class AsyncBriq:
     each add their own. ``http_client`` is an ``httpx.AsyncClient`` of your own (a proxy, a CA
     bundle, a mounted transport): it is used as it is, except that no redirect is ever followed,
     its ``base_url`` is ignored, and ``close`` leaves it open. ``transport`` is for tests.
+
+    ``execution_mode`` is central by default. Auto discovers regional access for short commands;
+    regional requires it. A custom control connection needs a separate ``execution_http_client``
+    or ``execution_transport``. Execution never inherits client headers, cookies or auth.
     """
 
     def __init__(
@@ -40,14 +45,29 @@ class AsyncBriq:
         timeout: float = 30.0,
         transport: httpx.AsyncBaseTransport | None = None,
         http_client: httpx.AsyncClient | None = None,
+        execution_mode: ExecutionMode = "central",
+        execution_http_client: httpx.AsyncClient | None = None,
+        execution_transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._key, self._origin = resolve(api_key, base_url)
         self._timeout = timeout
+        self._execution_mode = mode_of(execution_mode)
+        if http_client is not None and execution_http_client is http_client:
+            raise BriqError("invalid_argument", "Use a separate execution HTTP client")
+        custom_control = http_client is not None or transport is not None
+        self._owns_execution = execution_http_client is None
+        self._execution_http = execution_http_client
+        if execution_mode != "central" and (not custom_control or execution_transport is not None):
+            self._execution_http = self._execution_http or httpx.AsyncClient(
+                transport=execution_transport, trust_env=False
+            )
         # The environment's proxy and CA settings apply (``HTTP(S)_PROXY``, ``SSL_CERT_FILE``).
         self._owns_http = http_client is None
         self._http = http_client or httpx.AsyncClient(transport=transport)
 
     async def close(self) -> None:
+        if self._owns_execution and self._execution_http is not None:
+            await self._execution_http.aclose()
         if self._owns_http:
             await self._http.aclose()
 
@@ -102,17 +122,42 @@ class AsyncBriq:
     # --- the driver ---
 
     async def _send(self, request: f.Request) -> f.Reply:
-        built = self._http.build_request(
-            request.method,
-            self._origin + request.path,
-            params=request.query,
-            json=request.json,
-            content=request.content,
-            headers=headers(self._key, request.headers),
-            timeout=timeout_of(request.timeout or self._timeout),
-        )
+        client = self._http
+        if request.execution is not None:
+            request.execution.check_expiry()
+            if self._execution_http is None:
+                raise BriqError("unavailable", "A separate execution transport is required")
+            client = self._execution_http
+            # Build independently: no default cookies, headers or auth from either client.
+            built = httpx.Request(
+                request.method,
+                request.execution.origin + request.path,
+                json=request.json,
+                headers={
+                    "authorization": f"Bearer {request.execution.token}",
+                    "accept": "application/json",
+                },
+                extensions={
+                    "timeout": timeout_of(request.timeout or f.REGIONAL_EXEC_TIMEOUT).as_dict()
+                },
+            )
+        else:
+            built = self._http.build_request(
+                request.method,
+                self._origin + request.path,
+                params=request.query,
+                json=request.json,
+                content=request.content,
+                headers=headers(self._key, request.headers),
+                timeout=timeout_of(request.timeout or self._timeout),
+            )
         try:
-            response = await self._http.send(built, stream=True, follow_redirects=False)
+            response = await client.send(
+                built,
+                stream=True,
+                follow_redirects=False,
+                **({"auth": None} if request.execution else {}),
+            )
         except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout) as exc:
             raise f.NoAnswer(never_sent=True) from exc
         except httpx.HTTPError as exc:
@@ -241,6 +286,8 @@ class AsyncSandbox:
                 stdin=stdin,
                 timeout=timeout,
                 on_output=on_output,
+                execution_mode=self._client._execution_mode,
+                execution_ready=self._client._execution_http is not None,
             )
         )
 
@@ -264,14 +311,19 @@ class AsyncSandbox:
         """A URL for a port of the sandbox. Private: only whoever holds the URL can open it."""
         return await self._client._run(f.preview_url(self.id, port, public))
 
-    async def stop(self) -> SandboxInfo:
-        """Stop it; the disk is kept and nothing is billed until ``start``."""
-        self.info = await self._client._run(f.stop_sandbox(self.id))
+    async def stop(self, *, cold: bool = False) -> SandboxInfo:
+        """Stop it; ``cold=True`` discards its memory snapshot before the next start."""
+        self.info = await self._client._run(f.stop_sandbox(self.id, cold))
         return self.info
 
     async def start(self, *, wait_timeout: float = 120.0) -> SandboxInfo:
         """Start a stopped or sleeping sandbox and wait until it runs. Any call wakes it too."""
         self.info = await self._client._run(f.start_sandbox(self.id, wait_timeout))
+        return self.info
+
+    async def set_image(self, image: str) -> SandboxInfo:
+        """Change a stopped sandbox's image. Start it explicitly after the change lands."""
+        self.info = await self._client._run(f.set_image(self.id, image))
         return self.info
 
     async def set_sleep(self, after: str) -> SandboxInfo:
